@@ -225,14 +225,13 @@ def get_top(
                 and show_members > 0
                 and iteration <= show_members
             ):
-                for sample_vip in sorted_data[:show_members]:
-                    best_players_names = [
-                        data['name'] for data in squadtype_allplayers
-                        if data.get('team') == sample_vip['team']
-                        and data.get('unit_name') == sample_vip['name']
-                    ]
-                    best_players_str = '; '.join(best_players_names)
-                    output += f"{best_players_str}\n"
+                best_players_names = [
+                    data['name'] for data in squadtype_allplayers
+                    if data.get('team') == sample['team']
+                    and data.get('unit_name') == sample['name']
+                ]
+                best_players_str = '; '.join(best_players_names)
+                output += f"{best_players_str}\n"
 
         # Give VIP to players
         if (
@@ -374,6 +373,9 @@ def team_view_stats(rcon: Rcon):
 
                 squad_data = get_team_view[team]["squads"][squad]
                 squad_data["team"] = team
+                for player in squad_data["players"]:
+                    player["team"] = team
+                    player["unit_name"] = squad
 
                 # Infantry
                 if squad_data["type"] == "infantry" or squad_data["type"] == "recon":
