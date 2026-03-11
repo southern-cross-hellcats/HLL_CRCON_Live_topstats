@@ -195,7 +195,8 @@ def get_top(
     third_data: str,
     fourth_data: str,
     squadtype_allplayers : list,  # Observed squad type ("infantry" or "tankers") players sats
-    award_vip: bool = False
+    award_vip: bool = False,
+    server_status: dict | None = None
 ) -> str:
     """
     Returns a string, listing top players or squads, as calculated by sortkey
@@ -206,9 +207,7 @@ def get_top(
     if callmode == "chat":
         tops_limit = TOPS_CHAT
         show_members = TOPS_CHAT_DETAIL_SQUADS
-        server_status = None
     elif callmode == "matchend":
-        server_status = rcon.get_status()  # Get the number of players -> give VIP if not in seed
         tops_limit = TOPS_MATCHEND
         show_members = TOPS_MATCHEND_DETAIL_SQUADS
     else:
@@ -508,21 +507,24 @@ def stats_gather(
 
     all_squads_infantry = [{'name': key, **value} for item in all_squads_infantry for key, value in item.items()]
     all_squads_armor = [{'name': key, **value} for item in all_squads_armor for key, value in item.items()]
+    server_status = None
+    if callmode == "matchend":
+        server_status = rcon.get_status()
 
     return (
         # Players (commanders)
-        get_top(rcon, callmode, "player", all_commanders, teamplay, "name", "combat", "support", "", all_commanders, award_vip=True),
+        get_top(rcon, callmode, "player", all_commanders, teamplay, "name", "combat", "support", "", all_commanders, award_vip=True, server_status=server_status),
         # Players (infantry)
-        get_top(rcon, callmode, "player", all_players_infantry, real_offdef, "name", "offense", "defense", "", all_players_infantry, award_vip=True),
-        get_top(rcon, callmode, "player", all_players_infantry, teamplay, "name", "combat", "support", "", all_players_infantry, award_vip=True),
-        get_top(rcon, callmode, "player", all_players_infantry, ratio, "name", "kills", "deaths", "", all_players_infantry),
-        get_top(rcon, callmode, "player", all_players_infantry, killrate, "name", "kills", "offense", "defense", all_players_infantry),
+        get_top(rcon, callmode, "player", all_players_infantry, real_offdef, "name", "offense", "defense", "", all_players_infantry, award_vip=True, server_status=server_status),
+        get_top(rcon, callmode, "player", all_players_infantry, teamplay, "name", "combat", "support", "", all_players_infantry, award_vip=True, server_status=server_status),
+        get_top(rcon, callmode, "player", all_players_infantry, ratio, "name", "kills", "deaths", "", all_players_infantry, server_status=server_status),
+        get_top(rcon, callmode, "player", all_players_infantry, killrate, "name", "kills", "offense", "defense", all_players_infantry, server_status=server_status),
         # Squads (infantry)
-        get_top(rcon, callmode, "squad", all_squads_infantry, real_offdef, "name", "offense", "defense", "", all_players_infantry),
-        get_top(rcon, callmode, "squad", all_squads_infantry, teamplay, "name", "combat", "support", "", all_players_infantry),
+        get_top(rcon, callmode, "squad", all_squads_infantry, real_offdef, "name", "offense", "defense", "", all_players_infantry, server_status=server_status),
+        get_top(rcon, callmode, "squad", all_squads_infantry, teamplay, "name", "combat", "support", "", all_players_infantry, server_status=server_status),
         # Squads (armor)
-        get_top(rcon, callmode, "squad", all_squads_armor, real_offdef, "name", "offense", "defense", "", all_players_armor),
-        get_top(rcon, callmode, "squad", all_squads_armor, teamplay, "name", "combat", "support", "", all_players_armor)
+        get_top(rcon, callmode, "squad", all_squads_armor, real_offdef, "name", "offense", "defense", "", all_players_armor, server_status=server_status),
+        get_top(rcon, callmode, "squad", all_squads_armor, teamplay, "name", "combat", "support", "", all_players_armor, server_status=server_status)
     )
 
 
