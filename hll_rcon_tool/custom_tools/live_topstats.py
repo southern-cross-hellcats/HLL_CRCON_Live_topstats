@@ -130,7 +130,6 @@ TRANSL = {
 # VIP announce : local time
 # Find you local timezone : https://utctime.info/timezone/
 LOCAL_TIMEZONE = "America/Argentina/Buenos_Aires"
-LOCAL_TIME_FORMAT = f"%d/%m/%Y {TRANSL['vip_at'][LANG]} %Hh%M"
 
 # Discord
 # -------------------------------------
@@ -197,6 +196,13 @@ def is_configured_discord_webhook(url: str) -> bool:
     Returns True when the webhook URL looks like a real Discord webhook value.
     """
     return url.startswith("https://discord.com/api/webhooks/") and "..." not in url
+
+
+def get_local_time_format() -> str:
+    """
+    Returns the localized VIP expiration display format for the current language.
+    """
+    return f"%d/%m/%Y {TRANSL['vip_at'][LANG]} %Hh%M"
 
 
 def get_top(
@@ -304,7 +310,7 @@ def give_xh_vip(rcon: Rcon, player_id: str, player_name: str, hours_awarded: int
     # Returns a string giving the new expiration date in local time
     now_plus_xh_utc = now_plus_xh.replace(tzinfo=ZoneInfo("UTC"))
     now_plus_xh_paris_tz = now_plus_xh_utc.astimezone(ZoneInfo(LOCAL_TIMEZONE))
-    now_plus_xh_display_formatted = now_plus_xh_paris_tz.strftime(LOCAL_TIME_FORMAT)
+    now_plus_xh_display_formatted = now_plus_xh_paris_tz.strftime(get_local_time_format())
     return f"{TRANSL['vip_until'][LANG]} {str(now_plus_xh_display_formatted)} !\n"
 
 
