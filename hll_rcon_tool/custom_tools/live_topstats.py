@@ -11,6 +11,7 @@ Feel free to use/modify/distribute, as long as you keep this note in your code
 
 from datetime import datetime, timedelta, timezone
 import logging
+from typing import Any, Callable
 from zoneinfo import ZoneInfo
 
 import discord
@@ -202,15 +203,15 @@ def get_top(
     rcon: Rcon,
     callmode: str,  # either "chat" or "matchend"
     calltype: str,  # either "player" or "squad"
-    data_bucket: list,
-    sortkey,
+    data_bucket: list[dict[str, Any]],
+    sortkey: Callable[[dict[str, Any]], float | int],
     first_data: str,
     second_data: str,
     third_data: str,
     fourth_data: str,
-    squadtype_allplayers : list,  # Observed squad type ("infantry" or "tankers") players sats
+    squadtype_allplayers : list[dict[str, Any]],  # Observed squad type ("infantry" or "tankers") players sats
     award_vip: bool = False,
-    server_status: dict | None = None
+    server_status: dict[str, Any] | None = None
 ) -> str:
     """
     Returns a string, listing top players or squads, as calculated by sortkey
@@ -326,7 +327,7 @@ def message_all_players(rcon: Rcon, message: str):
             LOGGER.exception("Failed to message player %s (%s)", player_name, player_id)
 
 
-def ratio(obj) -> float:
+def ratio(obj: dict[str, Any]) -> float:
     """
     returns (kills/deaths) score
     """
@@ -337,7 +338,7 @@ def ratio(obj) -> float:
     return round(computed_ratio, 1)
 
 
-def real_offdef(obj) -> int:
+def real_offdef(obj: dict[str, Any]) -> int:
     """
     returns a combined offense + (defense * OFFENSEDEFENSE_RATIO) score
     """
@@ -346,7 +347,7 @@ def real_offdef(obj) -> int:
     return int(int(obj["offense"]) + (int(obj["defense"]) * abs(OFFENSEDEFENSE_RATIO)))
 
 
-def teamplay(obj) -> int:
+def teamplay(obj: dict[str, Any]) -> int:
     """
     returns a combined combat + (support * COMBATSUPPORT_RATIO) score
     """
@@ -355,7 +356,7 @@ def teamplay(obj) -> int:
     return int(int(obj["combat"]) + int(obj["support"]) * abs(COMBATSUPPORT_RATIO))
 
 
-def killrate(obj) -> float:
+def killrate(obj: dict[str, Any]) -> float:
     """
     returns kills/playtime in minutes
     """
@@ -369,7 +370,7 @@ def killrate(obj) -> float:
     return round((kills / ((offense + defense) / SCORE_PER_MINUTE)), 1)
 
 
-def team_view_stats(rcon: Rcon):
+def team_view_stats(rcon: Rcon) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     """
     Get the get_team_view data
     and gather the infos according to the squad types and soldier roles
@@ -506,7 +507,7 @@ def stats_display(
 def stats_gather(
     rcon: Rcon,
     callmode: str
-):
+) -> tuple[str, str, str, str, str, str, str, str, str]:
     """
     Calls team_view_stats() and gathers data in players categories
     Then returns a tuple containing categories stats as calculated by get_top()
