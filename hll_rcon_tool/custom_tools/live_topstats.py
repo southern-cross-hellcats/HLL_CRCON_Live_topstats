@@ -202,10 +202,13 @@ def get_top(
     if callmode == "chat":
         tops_limit = TOPS_CHAT
         show_members = TOPS_CHAT_DETAIL_SQUADS
-    if callmode == "matchend":
+        server_status = None
+    elif callmode == "matchend":
         server_status = rcon.get_status()  # Get the number of players -> give VIP if not in seed
         tops_limit = TOPS_MATCHEND
         show_members = TOPS_MATCHEND_DETAIL_SQUADS
+    else:
+        raise ValueError(f"Unsupported callmode: {callmode}")
 
     sorted_data = sorted(data_bucket, key=sortkey, reverse=True)
     output = ""
@@ -239,6 +242,7 @@ def get_top(
             and calltype == "player"
             and VIP_WINNERS > 0
             and VIP_HOURS > 0  # Security : avoids to give a 0 hour VIP
+            and server_status is not None
             and server_status["current_players"] >= SEED_LIMIT
             and second_data != "kills"  # No VIP for top ratios and killrates
             and iteration <= VIP_WINNERS
