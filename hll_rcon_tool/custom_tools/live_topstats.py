@@ -205,6 +205,15 @@ def get_local_time_format() -> str:
     return f"%d/%m/%Y {TRANSL['vip_at'][LANG]} %Hh%M"
 
 
+def normalized_ratio(multiplier: float) -> float:
+    """
+    Returns the absolute multiplier, treating 0 as an unweighted value of 1.
+    """
+    if multiplier == 0:
+        return 1
+    return abs(multiplier)
+
+
 def get_top(
     rcon: Rcon,
     callmode: str,  # either "chat" or "matchend"
@@ -348,18 +357,14 @@ def real_offdef(obj: dict[str, Any]) -> int:
     """
     returns a combined offense + (defense * OFFENSEDEFENSE_RATIO) score
     """
-    if OFFENSEDEFENSE_RATIO == 0:
-        return int(int(obj["offense"]) + int(obj["defense"]))
-    return int(int(obj["offense"]) + (int(obj["defense"]) * abs(OFFENSEDEFENSE_RATIO)))
+    return int(int(obj["offense"]) + (int(obj["defense"]) * normalized_ratio(OFFENSEDEFENSE_RATIO)))
 
 
 def teamplay(obj: dict[str, Any]) -> int:
     """
     returns a combined combat + (support * COMBATSUPPORT_RATIO) score
     """
-    if COMBATSUPPORT_RATIO == 0:
-        return int(int(obj["combat"]) + int(obj["support"]))
-    return int(int(obj["combat"]) + int(obj["support"]) * abs(COMBATSUPPORT_RATIO))
+    return int(int(obj["combat"]) + int(obj["support"]) * normalized_ratio(COMBATSUPPORT_RATIO))
 
 
 def killrate(obj: dict[str, Any]) -> float:
@@ -440,14 +445,8 @@ def stats_display(
     """
     Format the message sent
     """
-    if OFFENSEDEFENSE_RATIO == 0:
-        offensedefense_ratio = 1
-    else:
-        offensedefense_ratio = abs(OFFENSEDEFENSE_RATIO)
-    if COMBATSUPPORT_RATIO == 0:
-        combatsupport_ratio = 1
-    else:
-        combatsupport_ratio = abs(COMBATSUPPORT_RATIO)
+    offensedefense_ratio = normalized_ratio(OFFENSEDEFENSE_RATIO)
+    combatsupport_ratio = normalized_ratio(COMBATSUPPORT_RATIO)
     message = ""
     # players
     if (
