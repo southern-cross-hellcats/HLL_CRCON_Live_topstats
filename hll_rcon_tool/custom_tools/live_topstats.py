@@ -191,7 +191,8 @@ def get_top(
     second_data: str,
     third_data: str,
     fourth_data: str,
-    squadtype_allplayers : list  # Observed squad type ("infantry" or "tankers") players sats
+    squadtype_allplayers : list,  # Observed squad type ("infantry" or "tankers") players sats
+    award_vip: bool = False
 ) -> str:
     """
     Returns a string, listing top players or squads, as calculated by sortkey
@@ -240,11 +241,11 @@ def get_top(
         if (
             callmode == "matchend"
             and calltype == "player"
+            and award_vip
             and VIP_WINNERS > 0
             and VIP_HOURS > 0  # Security : avoids to give a 0 hour VIP
             and server_status is not None
             and server_status["current_players"] >= SEED_LIMIT
-            and second_data != "kills"  # No VIP for top ratios and killrates
             and iteration <= VIP_WINNERS
         ):
             # No VIP for "entered at last second" commander
@@ -507,10 +508,10 @@ def stats_gather(
 
     return (
         # Players (commanders)
-        get_top(rcon, callmode, "player", all_commanders, teamplay, "name", "combat", "support", "", all_commanders),
+        get_top(rcon, callmode, "player", all_commanders, teamplay, "name", "combat", "support", "", all_commanders, award_vip=True),
         # Players (infantry)
-        get_top(rcon, callmode, "player", all_players_infantry, real_offdef, "name", "offense", "defense", "", all_players_infantry),
-        get_top(rcon, callmode, "player", all_players_infantry, teamplay, "name", "combat", "support", "", all_players_infantry),
+        get_top(rcon, callmode, "player", all_players_infantry, real_offdef, "name", "offense", "defense", "", all_players_infantry, award_vip=True),
+        get_top(rcon, callmode, "player", all_players_infantry, teamplay, "name", "combat", "support", "", all_players_infantry, award_vip=True),
         get_top(rcon, callmode, "player", all_players_infantry, ratio, "name", "kills", "deaths", "", all_players_infantry),
         get_top(rcon, callmode, "player", all_players_infantry, killrate, "name", "kills", "offense", "defense", all_players_infantry),
         # Squads (infantry)
