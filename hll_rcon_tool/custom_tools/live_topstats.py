@@ -10,6 +10,7 @@ Feel free to use/modify/distribute, as long as you keep this note in your code
 """
 
 from datetime import datetime, timedelta, timezone
+import logging
 from zoneinfo import ZoneInfo
 
 import discord
@@ -17,6 +18,9 @@ import discord
 from rcon.rcon import Rcon, StructuredLogLineWithMetaData
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import get_server_number
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 # Configuration (you must review/change these !)
@@ -183,6 +187,7 @@ def get_discord_embed_author_url() -> str:
         config = RconServerSettingsUserConfig.load_from_db()
         return str(config.server_url)
     except Exception:
+        LOGGER.exception("Failed to load Discord embed author URL from CRCON settings")
         return ""
 
 
@@ -318,7 +323,7 @@ def message_all_players(rcon: Rcon, message: str):
                 by="top_stats"
             )
         except Exception:
-            pass
+            LOGGER.exception("Failed to message player %s (%s)", player_name, player_id)
 
 
 def ratio(obj) -> float:
@@ -666,4 +671,4 @@ def stats_on_match_end(
         try:
             webhook.send(embeds=embeds, wait=True)
         except Exception:
-            pass
+            LOGGER.exception("Failed to send Discord webhook for server %s", server_number)
