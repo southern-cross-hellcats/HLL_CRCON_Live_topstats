@@ -75,6 +75,7 @@ Tankers don't get any VIP, as they usually have a huge combat score and would ea
 
 ## Config
 - Configuration now supports environment variables, which fits naturally with CRCON's existing `.env` / `default.env` setup.
+- A ready-to-copy sample file is included at `example.live_topstats.env`.
 - Add the variables you want to override to your CRCON `.env` file, for example:
   ```env
   LIVE_TOPSTATS_LANG=0
