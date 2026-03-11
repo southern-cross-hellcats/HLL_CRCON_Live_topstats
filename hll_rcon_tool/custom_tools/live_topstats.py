@@ -186,6 +186,13 @@ def get_discord_embed_author_url() -> str:
         return ""
 
 
+def is_configured_discord_webhook(url: str) -> bool:
+    """
+    Returns True when the webhook URL looks like a real Discord webhook value.
+    """
+    return url.startswith("https://discord.com/api/webhooks/") and "..." not in url
+
+
 def get_top(
     rcon: Rcon,
     callmode: str,  # either "chat" or "matchend"
@@ -637,6 +644,8 @@ def stats_on_match_end(
         if not SERVER_CONFIG[server_index][1]:
             return
         discord_webhook = SERVER_CONFIG[server_index][0]
+        if not is_configured_discord_webhook(discord_webhook):
+            return
 
         # Create and send discord embed
         webhook = discord.SyncWebhook.from_url(discord_webhook)
