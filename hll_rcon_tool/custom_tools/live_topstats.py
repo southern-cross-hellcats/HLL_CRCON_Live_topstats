@@ -152,15 +152,6 @@ DISCORD_EMBED_AUTHOR_ICON_URL = (
 # Miscellaneous (you should not change these)
 # -------------------------------------
 
-# Clan related (as set in /settings/rcon-server)
-try:
-    config = RconServerSettingsUserConfig.load_from_db()
-    CLAN_URL = str(config.discord_invite_url)
-    DISCORD_EMBED_AUTHOR_URL = str(config.server_url)
-except Exception:
-    CLAN_URL = ""
-    DISCORD_EMBED_AUTHOR_URL = ""
-
 # Bot name that will be displayed in CRCON "audit logs" and Discord embeds
 BOT_NAME = "CRCON_top_stats_of_the_game"
 
@@ -182,6 +173,17 @@ def is_vip_for_less_than_xh(rcon: Rcon, player_id: str, vip_delay_hours: int):
                 return True
             return False
     return True  # player wasn't in the actual VIP list
+
+
+def get_discord_embed_author_url() -> str:
+    """
+    Loads the server URL from CRCON settings when it is needed for Discord embeds.
+    """
+    try:
+        config = RconServerSettingsUserConfig.load_from_db()
+        return str(config.server_url)
+    except Exception:
+        return ""
 
 
 def get_top(
@@ -646,7 +648,7 @@ def stats_on_match_end(
         )
         embed.set_author(
             name=BOT_NAME,
-            url=DISCORD_EMBED_AUTHOR_URL,
+            url=get_discord_embed_author_url(),
             icon_url=DISCORD_EMBED_AUTHOR_ICON_URL
         )
 
