@@ -629,10 +629,12 @@ def stats_on_match_end(
         message_all_players(rcon, message)
 
         # Check if Discord webhook is enabled
-        server_number = int(get_server_number())
-        if not SERVER_CONFIG[server_number - 1][1]:
+        server_index = int(server_number) - 1
+        if server_index < 0 or server_index >= len(SERVER_CONFIG):
             return
-        discord_webhook = SERVER_CONFIG[server_number - 1][0]
+        if not SERVER_CONFIG[server_index][1]:
+            return
+        discord_webhook = SERVER_CONFIG[server_index][0]
 
         # Create and send discord embed
         webhook = discord.SyncWebhook.from_url(discord_webhook)
