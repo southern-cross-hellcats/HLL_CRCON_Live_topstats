@@ -617,8 +617,10 @@ def stats_on_match_end(
         )
 
         # No stats : no need to send any ingame message
-        if message != f"{TRANSL['nostatsyet'][LANG]}":
-            message_all_players(rcon, message)
+        if message == f"{TRANSL['nostatsyet'][LANG]}":
+            return
+
+        message_all_players(rcon, message)
 
         # Check if Discord webhook is enabled
         server_number = int(get_server_number())
