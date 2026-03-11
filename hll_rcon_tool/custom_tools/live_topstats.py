@@ -94,6 +94,9 @@ SEED_LIMIT = 40
 # If the player already has a VIP that ends AFTER this delay, VIP won't be given.
 VIP_HOURS = 24
 
+# HLL score increases by roughly 20 points per minute of active play.
+SCORE_PER_MINUTE = 20
+
 # Translations
 # "key" : ["english", "french", "german", "brazilian-portuguese", "polish", "spanish"]
 # ----------------------------------------------
@@ -254,7 +257,7 @@ def get_top(
                 and (
                     (
                         int(sample['offense']) + int(sample['defense'])
-                    ) / 20 < VIP_COMMANDER_MIN_PLAYTIME_MINS
+                    ) / SCORE_PER_MINUTE < VIP_COMMANDER_MIN_PLAYTIME_MINS
                     or int(sample['support']) < VIP_COMMANDER_MIN_SUPPORT_SCORE
                 )
             ):
@@ -350,7 +353,7 @@ def killrate(obj) -> float:
         return 0
     if offense == 0 and defense == 0:
         return 0
-    return round((kills / ((offense + defense) / 20)), 1)
+    return round((kills / ((offense + defense) / SCORE_PER_MINUTE)), 1)
 
 
 def team_view_stats(rcon: Rcon):
