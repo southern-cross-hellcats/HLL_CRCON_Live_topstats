@@ -1,7 +1,10 @@
 import importlib.util
+import os
 import sys
 import types
 import unittest
+from typing import Any, cast
+from unittest import mock
 from pathlib import Path
 
 
@@ -27,8 +30,8 @@ def load_live_topstats_module():
         def set_author(self, **_kwargs):
             return None
 
-    discord_module.SyncWebhook = FakeSyncWebhook
-    discord_module.Embed = FakeEmbed
+    setattr(discord_module, "SyncWebhook", FakeSyncWebhook)
+    setattr(discord_module, "Embed", FakeEmbed)
     sys.modules["discord"] = discord_module
 
     rcon_package = types.ModuleType("rcon")
@@ -36,8 +39,8 @@ def load_live_topstats_module():
     sys.modules["rcon"] = rcon_package
 
     rcon_rcon_module = types.ModuleType("rcon.rcon")
-    rcon_rcon_module.Rcon = object
-    rcon_rcon_module.StructuredLogLineWithMetaData = dict
+    setattr(rcon_rcon_module, "Rcon", object)
+    setattr(rcon_rcon_module, "StructuredLogLineWithMetaData", dict)
     sys.modules["rcon.rcon"] = rcon_rcon_module
 
     user_config_package = types.ModuleType("rcon.user_config")
@@ -51,18 +54,19 @@ def load_live_topstats_module():
         def load_from_db():
             return types.SimpleNamespace(server_url="https://example.com")
 
-    server_settings_module.RconServerSettingsUserConfig = FakeSettingsConfig
+    setattr(server_settings_module, "RconServerSettingsUserConfig", FakeSettingsConfig)
     sys.modules["rcon.user_config.rcon_server_settings"] = server_settings_module
 
     utils_module = types.ModuleType("rcon.utils")
-    utils_module.get_server_number = lambda: "1"
+    setattr(utils_module, "get_server_number", lambda: "1")
     sys.modules["rcon.utils"] = utils_module
 
     spec = importlib.util.spec_from_file_location("test_live_topstats_module", MODULE_PATH)
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
-    return module
+    return cast(Any, module)
 
 
 class LiveTopStatsTests(unittest.TestCase):
@@ -84,6 +88,30 @@ class LiveTopStatsTests(unittest.TestCase):
             )
         finally:
             self.live_topstats.LANG = original_lang
+
+    def test_get_env_list_supports_json_and_csv(self):
+        with mock.patch.dict(os.environ, {"LIVE_TOPSTATS_TEST_LIST": '["1", "2"]'}, clear=False):
+            self.assertEqual(self.live_topstats.get_env_list("LIVE_TOPSTATS_TEST_LIST", ["9"]), ["1", "2"])
+
+        with mock.patch.dict(os.environ, {"LIVE_TOPSTATS_TEST_LIST": "1, 2,3"}, clear=False):
+            self.assertEqual(self.live_topstats.get_env_list("LIVE_TOPSTATS_TEST_LIST", ["9"]), ["1", "2", "3"])
+
+    def test_get_env_server_config_falls_back_on_invalid_json(self):
+        default = [["https://discord.com/api/webhooks/default", False]]
+        with mock.patch.dict(os.environ, {"LIVE_TOPSTATS_SERVER_CONFIG": "not-json"}, clear=False):
+            self.assertEqual(self.live_topstats.get_env_server_config(default), default)
+
+    def test_get_env_server_config_parses_json(self):
+        default = [["https://discord.com/api/webhooks/default", False]]
+        value = '[["https://discord.com/api/webhooks/one", true], ["https://discord.com/api/webhooks/two", false]]'
+        with mock.patch.dict(os.environ, {"LIVE_TOPSTATS_SERVER_CONFIG": value}, clear=False):
+            self.assertEqual(
+                self.live_topstats.get_env_server_config(default),
+                [
+                    ["https://discord.com/api/webhooks/one", True],
+                    ["https://discord.com/api/webhooks/two", False],
+                ],
+            )
 
     def test_get_top_lists_members_for_current_squad_only(self):
         class FakeRcon:

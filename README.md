@@ -74,7 +74,40 @@ Tankers don't get any VIP, as they usually have a huge combat score and would ea
     ```
 
 ## Config
-- Edit `/root/hll_rcon_tool/custom_tools/live_topstats.py` and set the parameters to fit your needs.
+- Configuration now supports environment variables, which fits naturally with CRCON's existing `.env` / `default.env` setup.
+- Add the variables you want to override to your CRCON `.env` file, for example:
+  ```env
+  LIVE_TOPSTATS_LANG=0
+  LIVE_TOPSTATS_ENABLE_ON_SERVERS=["1","2"]
+  LIVE_TOPSTATS_CHAT_COMMAND=!top
+  LIVE_TOPSTATS_TOPS_MATCHEND=3
+  LIVE_TOPSTATS_VIP_WINNERS=1
+  LIVE_TOPSTATS_VIP_HOURS=24
+  LIVE_TOPSTATS_LOCAL_TIMEZONE=America/Argentina/Buenos_Aires
+  LIVE_TOPSTATS_SERVER_CONFIG=[["https://discord.com/api/webhooks/REAL_SERVER_1",true],["https://discord.com/api/webhooks/REAL_SERVER_2",false]]
+  ```
+- Supported variables:
+  - `LIVE_TOPSTATS_LANG`
+  - `LIVE_TOPSTATS_ENABLE_ON_SERVERS` (`["1","2"]` JSON or `1,2` comma-separated)
+  - `LIVE_TOPSTATS_OFFENSEDEFENSE_RATIO`
+  - `LIVE_TOPSTATS_COMBATSUPPORT_RATIO`
+  - `LIVE_TOPSTATS_CHAT_COMMAND`
+  - `LIVE_TOPSTATS_TOPS_CHAT`
+  - `LIVE_TOPSTATS_TOPS_CHAT_DETAIL_SQUADS`
+  - `LIVE_TOPSTATS_TOPS_MATCHEND`
+  - `LIVE_TOPSTATS_TOPS_MATCHEND_DETAIL_SQUADS`
+  - `LIVE_TOPSTATS_VIP_WINNERS`
+  - `LIVE_TOPSTATS_VIP_COMMANDER_MIN_PLAYTIME_MINS`
+  - `LIVE_TOPSTATS_VIP_COMMANDER_MIN_SUPPORT_SCORE`
+  - `LIVE_TOPSTATS_SEED_LIMIT`
+  - `LIVE_TOPSTATS_VIP_HOURS`
+  - `LIVE_TOPSTATS_SCORE_PER_MINUTE`
+  - `LIVE_TOPSTATS_LOCAL_TIMEZONE`
+  - `LIVE_TOPSTATS_SERVER_CONFIG` (JSON list of `[webhook_url, enabled]` pairs)
+  - `LIVE_TOPSTATS_DISCORD_EMBED_AUTHOR_ICON_URL`
+  - `LIVE_TOPSTATS_BOT_NAME`
+- If an environment variable is not set, the plugin falls back to the current built-in default.
+- You can still edit `/root/hll_rcon_tool/custom_tools/live_topstats.py`, but `.env` overrides are now the preferred way to configure the plugin.
 - Restart CRCON :
   ```shell
   cd /root/hll_rcon_tool

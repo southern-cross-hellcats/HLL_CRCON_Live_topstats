@@ -10,7 +10,9 @@ Feel free to use/modify/distribute, as long as you keep this note in your code
 """
 
 from datetime import datetime, timedelta, timezone
+import json
 import logging
+import os
 from typing import Any, Callable
 from zoneinfo import ZoneInfo
 
@@ -24,18 +26,95 @@ from rcon.utils import get_server_number
 LOGGER = logging.getLogger(__name__)
 
 
+def get_env_str(name: str, default: str) -> str:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value
+
+
+def get_env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        LOGGER.warning("Invalid integer for %s: %r; using default %r", name, value, default)
+        return default
+
+
+def get_env_float(name: str, default: float) -> float:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except ValueError:
+        LOGGER.warning("Invalid float for %s: %r; using default %r", name, value, default)
+        return default
+
+
+def get_env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    LOGGER.warning("Invalid boolean for %s: %r; using default %r", name, value, default)
+    return default
+
+
+def get_env_list(name: str, default: list[str]) -> list[str]:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        parsed = json.loads(value)
+        if isinstance(parsed, list):
+            return [str(item) for item in parsed]
+    except json.JSONDecodeError:
+        pass
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def get_env_server_config(default: list[list[Any]]) -> list[list[Any]]:
+    value = os.getenv("LIVE_TOPSTATS_SERVER_CONFIG")
+    if value is None:
+        return default
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        LOGGER.warning("Invalid JSON for LIVE_TOPSTATS_SERVER_CONFIG; using default config")
+        return default
+    if not isinstance(parsed, list):
+        LOGGER.warning("LIVE_TOPSTATS_SERVER_CONFIG must be a list; using default config")
+        return default
+
+    server_config: list[list[Any]] = []
+    for item in parsed:
+        if not isinstance(item, list) or len(item) != 2:
+            LOGGER.warning("Invalid server config entry %r; using default config", item)
+            return default
+        server_config.append([str(item[0]), bool(item[1])])
+    return server_config
+
+
 # Configuration (you must review/change these !)
 # -----------------------------------------------------------------------------
 
 # Translations
 # Available : 0 for english, 1 for french, 2 for german, 3 for brazilian portuguese, 4 for polish, 5 for spanish
-LANG = 0
+LANG = get_env_int("LIVE_TOPSTATS_LANG", 0)
 
 # Can be enabled/disabled on your different game servers
 # ie : ["1"]           = enabled only on server 1
 #      ["1", "2"]      = enabled on servers 1 and 2
 #      ["2", "4", "5"] = enabled on servers 2, 4 and 5
-ENABLE_ON_SERVERS = ["1"]
+ENABLE_ON_SERVERS = get_env_list("LIVE_TOPSTATS_ENABLE_ON_SERVERS", ["1"])
 
 # Gives a bonus to defense
 # ie : 1.5  = defense counts 1.5x more than offense (defense bonus)
@@ -44,25 +123,25 @@ ENABLE_ON_SERVERS = ["1"]
 #      0.5  = offense counts 2x more than defense (defense malus)
 #      0    = bonus disabled
 # Any negative value will be converted to positive (ie : -1.5 -> 1.5)
-OFFENSEDEFENSE_RATIO = 1.75
+OFFENSEDEFENSE_RATIO = get_env_float("LIVE_TOPSTATS_OFFENSEDEFENSE_RATIO", 1.75)
 
 # Gives a bonus to support
-COMBATSUPPORT_RATIO = 1.75
+COMBATSUPPORT_RATIO = get_env_float("LIVE_TOPSTATS_COMBATSUPPORT_RATIO", 1.75)
 
 
 # Calling from chat
 # ----------------------------------------
 
 # CHAT command
-CHAT_COMMAND = "!top"
+CHAT_COMMAND = get_env_str("LIVE_TOPSTATS_CHAT_COMMAND", "!top")
 
 # How many tops in each category should we display ?
 # Prefer 1-3 for a shorter message
-TOPS_CHAT = 3
+TOPS_CHAT = get_env_int("LIVE_TOPSTATS_TOPS_CHAT", 3)
 
 # Squads : display squad members for the nth top squads
 # Prefer 0 for a shorter message
-TOPS_CHAT_DETAIL_SQUADS = 1
+TOPS_CHAT_DETAIL_SQUADS = get_env_int("LIVE_TOPSTATS_TOPS_CHAT_DETAIL_SQUADS", 1)
 
 
 # Displayed at MATCH END
@@ -70,11 +149,11 @@ TOPS_CHAT_DETAIL_SQUADS = 1
 
 # How many tops in each category should we display ?
 # Prefer 1-3 for a shorter message
-TOPS_MATCHEND = 3
+TOPS_MATCHEND = get_env_int("LIVE_TOPSTATS_TOPS_MATCHEND", 3)
 
 # Squads : display squad members for the nth top squads
 # Prefer 0 for a shorter message
-TOPS_MATCHEND_DETAIL_SQUADS = 1
+TOPS_MATCHEND_DETAIL_SQUADS = get_env_int("LIVE_TOPSTATS_TOPS_MATCHEND_DETAIL_SQUADS", 1)
 
 # Give VIPs at match's end to the best nth top in each :
 # - commander (best combat + (support * COMBATSUPPORT_RATIO))
@@ -84,23 +163,23 @@ TOPS_MATCHEND_DETAIL_SQUADS = 1
 # 1 = gives a VIP to the top #1 players (3 VIPs awarded)
 # 2 = gives a VIP to the top #1 and #2 players (6 VIPs awarded)
 # 0 to disable
-VIP_WINNERS = 1
+VIP_WINNERS = get_env_int("LIVE_TOPSTATS_VIP_WINNERS", 1)
 
 # Avoid to give a VIP to a "entered at last second" commander
-VIP_COMMANDER_MIN_PLAYTIME_MINS = 20
-VIP_COMMANDER_MIN_SUPPORT_SCORE = 1000
+VIP_COMMANDER_MIN_PLAYTIME_MINS = get_env_int("LIVE_TOPSTATS_VIP_COMMANDER_MIN_PLAYTIME_MINS", 20)
+VIP_COMMANDER_MIN_SUPPORT_SCORE = get_env_int("LIVE_TOPSTATS_VIP_COMMANDER_MIN_SUPPORT_SCORE", 1000)
 
 # VIPs will be given if there is at least this number of players ingame
 # 0 to disable (VIP will always be given)
 # Recommended : the same number as your seed limit
-SEED_LIMIT = 40
+SEED_LIMIT = get_env_int("LIVE_TOPSTATS_SEED_LIMIT", 40)
 
 # How many VIP hours awarded ?
 # If the player already has a VIP that ends AFTER this delay, VIP won't be given.
-VIP_HOURS = 24
+VIP_HOURS = get_env_int("LIVE_TOPSTATS_VIP_HOURS", 24)
 
 # HLL score increases by roughly 20 points per minute of active play.
-SCORE_PER_MINUTE = 20
+SCORE_PER_MINUTE = get_env_int("LIVE_TOPSTATS_SCORE_PER_MINUTE", 20)
 
 # Translations
 # "key" : ["english", "french", "german", "brazilian-portuguese", "polish", "spanish"]
@@ -129,13 +208,13 @@ TRANSL = {
 
 # VIP announce : local time
 # Find you local timezone : https://utctime.info/timezone/
-LOCAL_TIMEZONE = "America/Argentina/Buenos_Aires"
+LOCAL_TIMEZONE = get_env_str("LIVE_TOPSTATS_LOCAL_TIMEZONE", "America/Argentina/Buenos_Aires")
 
 # Discord
 # -------------------------------------
 
 # Dedicated Discord's channel webhook
-SERVER_CONFIG = [
+SERVER_CONFIG = get_env_server_config([
     ["https://discord.com/api/webhooks/...", True],  # Server 1
     ["https://discord.com/api/webhooks/...", False],  # Server 2
     ["https://discord.com/api/webhooks/...", False],  # Server 3
@@ -146,18 +225,21 @@ SERVER_CONFIG = [
     ["https://discord.com/api/webhooks/...", False],  # Server 8
     ["https://discord.com/api/webhooks/...", False],  # Server 9
     ["https://discord.com/api/webhooks/...", False]  # Server 10
-]
+])
 
 # Discord : embed author icon
 DISCORD_EMBED_AUTHOR_ICON_URL = (
-    "https://cdn.discordapp.com/icons/316459644476456962/73a28de670af9e6569f231c9385398f3.webp?size=64"
+    get_env_str(
+        "LIVE_TOPSTATS_DISCORD_EMBED_AUTHOR_ICON_URL",
+        "https://cdn.discordapp.com/icons/316459644476456962/73a28de670af9e6569f231c9385398f3.webp?size=64",
+    )
 )
 
 # Miscellaneous (you should not change these)
 # -------------------------------------
 
 # Bot name that will be displayed in CRCON "audit logs" and Discord embeds
-BOT_NAME = "CRCON_top_stats_of_the_game"
+BOT_NAME = get_env_str("LIVE_TOPSTATS_BOT_NAME", "CRCON_top_stats_of_the_game")
 
 # (End of configuration)
 # -----------------------------------------------------------------------------
