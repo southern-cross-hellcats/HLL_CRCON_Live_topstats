@@ -76,6 +76,11 @@ Tankers don't get any VIP, as they usually have a huge combat score and would ea
 ## Config
 - Configuration now supports environment variables, which fits naturally with CRCON's existing `.env` / `default.env` setup.
 - A ready-to-copy sample file is included at `example.live_topstats.env`.
+- Quick start:
+  ```shell
+  cp /root/hll_rcon_tool/custom_tools/example.live_topstats.env /root/hll_rcon_tool/.env
+  ```
+  Then merge the values you want into your existing CRCON `.env` file instead of replacing unrelated settings.
 - Add the variables you want to override to your CRCON `.env` file, for example:
   ```env
   LIVE_TOPSTATS_LANG=0
@@ -87,6 +92,10 @@ Tankers don't get any VIP, as they usually have a huge combat score and would ea
   LIVE_TOPSTATS_LOCAL_TIMEZONE=America/Argentina/Buenos_Aires
   LIVE_TOPSTATS_SERVER_CONFIG=[["https://discord.com/api/webhooks/REAL_SERVER_1",true],["https://discord.com/api/webhooks/REAL_SERVER_2",false]]
   ```
+- Notes:
+  - `LIVE_TOPSTATS_ENABLE_ON_SERVERS` accepts either JSON (`["1","2"]`) or a comma-separated string (`1,2`).
+  - `LIVE_TOPSTATS_SERVER_CONFIG` must be valid JSON and uses lowercase JSON booleans: `true` / `false`.
+  - If `LIVE_TOPSTATS_SERVER_CONFIG` is omitted, the built-in placeholder values remain disabled except for server 1's example entry.
 - Supported variables:
   - `LIVE_TOPSTATS_LANG`
   - `LIVE_TOPSTATS_ENABLE_ON_SERVERS` (`["1","2"]` JSON or `1,2` comma-separated)
