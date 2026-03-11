@@ -167,8 +167,8 @@ BOT_NAME = "CRCON_top_stats_of_the_game"
 
 def is_vip_for_less_than_xh(rcon: Rcon, player_id: str, vip_delay_hours: int):
     """
-    returns 'true' if player has no VIP or a VIP that expires in less than vip_delay_hours,
-    'false' if he has a VIP that expires in more than vip_delay_hours or no VIP at all.
+    Returns True if the player has no VIP or the VIP expires within vip_delay_hours.
+    Returns False if the player already has a VIP that lasts longer than vip_delay_hours.
     """
     actual_vips = rcon.get_vip_ids()
     for item in actual_vips:
